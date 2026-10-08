@@ -1,11 +1,35 @@
-# KANet 结账页（checkout-static）发布包
+# KANet 结账页（测试版 v0.2.4-test）
 
-纯静态、无服务器依赖的浏览器结账页：买家打开一个带签名报价的链接，页面在浏览器本地用真实
-kaspa-wasm + silverc-wasm 验签、推导订单地址、生成收款地址+扫码二维码，到账后可直连节点监视状态并
-触发分账/退款——不需要任何后端进程。
+纯静态网页，在浏览器本地验签、推导订单地址并监视付款，不依赖我们的任何服务器。
 
-**本包所有仓库内文件均取自 commit `fe37797ec0cb8b7bbc91216ba1114309b1f0075f`，用 `git show <commit>:<path>` 原样提取，与该 commit
-逐字节一致——不是手工编辑的临时副本。**
+页面入口：`checkout-static/checkout.html`（订单信息由商家生成的链接携带）。
+
+## 请先读这几条
+
+1. **测试版**：版本号带 `-test`，功能与安全性未经公开审计，不应用于大额付款。
+2. **没有我们的服务器**：页面只做浏览器本地计算，不向我们的任何服务器发送数据。
+3. **主网结账页只连公共节点**：主网订单的链上状态只读取下列公共 Kaspa 节点，页面不接受订单链接指定的节点地址：`sara.kaspa.red`、`nina.kaspa.blue`、`eva.kaspa.green`、`vivi.kaspa.blue`、`isla.kaspa.red`（这些节点的运营方不是 KANet）。
+4. **订单凭据**：出单后务必下载订单凭据，凭据丢失将无法退款。
+5. **完整性自检**：本 README 末尾附全部 34 个文件（除本 README 外）的 sha256 清单，两个 wasm 另有来源 pin；可自行逐文件核对线上字节。
+6. **不是什么**：不是托管服务，不提供退款客服。资金直接进入订单合约地址，按规则自动分账或到期退款，KANet 不经手资金（退款走页面内的到期退款按钮）。
+7. **反馈渠道**：请在本仓库的 GitHub Issues 提交。
+
+## 隐私披露
+
+- 打开页面时，你的浏览器会从托管方（GitHub Pages）下载页面文件，GitHub 会按其隐私政策记录访问者 IP；我们看不到也无法关闭这些记录。
+- 订单信息在链接的查询串里（`q`、`ch`、`sc` 参数：签名报价引用、渠道地址、签名链），因此会出现在托管方的请求日志里。这些内容不含私钥。
+- 页面运行后会直接连上面第 3 点列出的公共节点读取链上状态，节点运营方能看到你的 IP 以及你查询的订单地址。
+- 页面自身代码未发现使用 cookie 或浏览器本地存储，也没有统计脚本或第三方脚本。（依据：对页面自身文件的文本搜索，没有 `cookie`/`localStorage`/`indexedDB`；随附的 `kaspa.js` 胶水里有钱包存储接口的绑定，本页未调用，但我们没有逐行通读验证。）
+
+## 版本与来源
+
+- 版本：`checkout-static-v0.2.4-test`（主仓 `Unio996/KANet` 的同名 tag），源 commit `fe37797ec0cb8b7bbc91216ba1114309b1f0075f`。
+- 本仓库第一个提交是发布包 zip 解压后的原样内容（35 个文件）加一个空的 `.nojekyll`；本 README 是之后单独一个提交替换了包内自带的 README.md（包外改动），其余文件未改动。
+- 发布包 zip 的 sha256：`d35f1eaa6113f617aca077b9d86249731b0e333d9bd44b2b7c1dd92d66e687e1`。注意 zip 本身不是字节可复现的（打包时间写入 zip 头），可复现的锚点是 manifest 里每个文件的 sha256。
+
+---
+
+以下为发布包自带的说明（原文，下文提到的"本包"即上述发布包）。
 
 ## 这个包里有什么
 
@@ -111,3 +135,43 @@ fail-closed 逐个核对过，不匹配不会生成包。
 - 严格 CSP 环境下的实际行为：未起过带 CSP header 的测试服务器验证。
 - ⑧d 的耗时数字是单次真实运行，非多轮统计中位数。
 - ⑨ 只采样验证了 5 个可用端点，公开节点池可能还有更多未穷举。
+
+
+## 全部文件 sha256（发布包 manifest，除本 README 外 34 个）
+
+| 文件 | 字节数 | sha256 |
+|---|---|---|
+| `checkout-static/checkout.html` | 3073 | `f71437e6957d310ebded1a420d895de509994784a575c59ca580386cc66c53a3` |
+| `checkout-static/checkout.js` | 55382 | `cb140f8e0256c2714284de3e428bc68fada9cc07a7f5ad03e5b73706ee070533` |
+| `checkout-static/verify-core.js` | 4817 | `98dd3f477fa3b176f6063af4419c97c43defa026c3b356b6512fe0fbad12784f` |
+| `checkout-static/resolve-order-browser.js` | 9378 | `cb286ed27db0bb8358f6c066d12a2ac206eddd4d2938faa7e2c2f38a4df831c5` |
+| `checkout-static/resolve-order-wasm.js` | 7987 | `8b1483d52a7425c4d759613f0f78727dd439398ebe215133cbe750d859582672` |
+| `checkout-static/order-template.js` | 12806 | `1c94ad830b51f4a516579939714f9996ad3e1f927172ef97fa8d6ddebdd04323` |
+| `checkout-static/monitor.js` | 6995 | `146b69518fac5e73d85dfa31a8cb88ea89661044124c53beb6ba2ec4d2ddb46e` |
+| `checkout-static/broadcast-commission.js` | 6565 | `127f48d6b6e5e2f0799dee7a75ee540ee1b856429c383a967c8b92594eca2eca` |
+| `checkout-static/broadcast-service-escrow.js` | 5385 | `d7c9ab2b0abb5f7fb9cc4cbd5e96b06a5175da710660a3b616271979199dd217` |
+| `checkout-static/order-receipt.js` | 3118 | `8f1f486dda5a13aba02990a62ba6787089766295f48c0c5e9a0f3f0f3a829393` |
+| `checkout-static/vendor/fee-split-browser.mjs` | 17917 | `a5737f465b746077eb3f844790e6303e8515c1988190c9dac3e1d94a09be2794` |
+| `checkout-static/vendor/generic-entry-witness-browser.mjs` | 7022 | `e65d67a4567a0e433845e2e70e81304e1f0700ef9f02975f199a4e244d7a72b7` |
+| `checkout-static/vendor/tx-mass-ub-browser.mjs` | 6910 | `30d80a81cab8f33004a8a24480f0cae0f85a05d15de270146feed320c5a18234` |
+| `checkout-static/vendor/qrcode-generator/qrcode.mjs` | 51907 | `ea91d7118a5395289170da848b7c6758b996163bfbccf312591ab65a4911b7c0` |
+| `checkout-static/vendor/qrcode-generator/LICENSE` | 1071 | `3a850fa5f08101db6f40676c2786e10bd2cd5fff7b12ffdf1e0c434d4e49d90c` |
+| `checkout-static/vendor/noble-hashes/LICENSE` | 1109 | `4f221aee6e072336700c408c68ab3b96a3fc09f6aebe6f48f1bd99e5ef13faec` |
+| `checkout-static/vendor/noble-hashes/blake2b.js` | 7600 | `6121b81288588c937124d2a85881de2650f5392477f8ec08b45afb65c3f488f1` |
+| `checkout-static/vendor/noble-hashes/blake2-internal.js` | 4646 | `19e1238beed57581fb0c78d99d67a3cf5d4ef4411a8b1dd7864feae040ac6388` |
+| `checkout-static/vendor/noble-hashes/assert-internal.js` | 1367 | `bd2a0bc5053296f825380b684bdd0d1ee1df149c179cdc53a4442a10838547d8` |
+| `checkout-static/vendor/noble-hashes/crypto.js` | 146 | `9211d026c5d21e60e0126dd6f01150d87da5ba7261b8f468215c1264372ff5a5` |
+| `checkout-static/vendor/noble-hashes/u64-internal.js` | 2967 | `25a28c13f59b354b981f44c647a35e69df7775fbae5e549d966f7b1d519ea22e` |
+| `checkout-static/vendor/noble-hashes/utils.js` | 6003 | `17ab1a3bb1ae013393394f8b0517d1978a2fa0dc0cb443e410c8e70d34f79c0a` |
+| `checkout-static/vendor/sil-source/ChannelDeposit.sil` | 2015 | `7333a59c7a615b67faa7570c1d1f283145686e07437ca18d2452c4b12c954a78` |
+| `checkout-static/vendor/sil-source/CommissionSplit.sil` | 14571 | `72bc6bf978ca240dcd6714c8c42acea88f8b04cc4026ba8ab3a8725ff49fe83a` |
+| `checkout-static/vendor/kaspa-web/README.md` | 2135 | `cd3d6124c9309b3b0e2425c5051cee6ab10bc9ef2db1da23eb986441d2696895` |
+| `checkout-static/vendor/silverc-wasm/README.md` | 4317 | `2dce9c00a3e404e3871bc806bf140594bef8fcb6aff8868f0fbf57a83d09a903` |
+| `checkout-static/vendor/kaspa-web/kaspa.js` | 537625 | `d0f14833f2db9c2fb4145a40e68d6221862a667eef15512e1994c02a5e588b04` |
+| `checkout-static/vendor/kaspa-web/kaspa_bg.wasm` | 11467355 | `732bdaa3ee8353c026654e9c7dd729674eb1bd064e8a0b8927b4cfb7df859e51` |
+| `checkout-static/vendor/kaspa-web/kaspa.d.ts` | 285627 | `78628cf0abe112d4103e3c66499e49e12881be1cd24f0953076de55f021e1b5d` |
+| `checkout-static/vendor/kaspa-web/LICENSE` | 764 | `929edb70a6ba89ae05689d3ee33453fdd63717a9f592038bf3d9420e35b434e6` |
+| `checkout-static/vendor/silverc-wasm/silverc_lang.js` | 38195 | `d67a0977cb97e74f9ed4f2808b29bb1182397aec7267c967528d6af0a535aaf1` |
+| `checkout-static/vendor/silverc-wasm/silverc_lang_bg.wasm` | 5346113 | `868e3f1b247a02b2a2eb39350dfcdd2fe03157c57d99b803b7e9ab2d7bfdc325` |
+| `checkout-static/vendor/silverc-wasm/silverc_lang.d.ts` | 15094 | `f03750534beb4916cef57a070f3f77aee11786eb87042d8ae8fe2431bedfef05` |
+| `checkout-static/vendor/silverc-wasm/silverc_lang_bg.wasm.d.ts` | 7872 | `9cc7c87aff66a4a68bda5f1847bc532d75efc6ce4f10f096a63da318af7c53c1` |
