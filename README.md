@@ -25,6 +25,7 @@
 
 - 版本：`checkout-static-v0.2.4-test`（主仓 `Unio996/KANet` 的同名 tag），源 commit `fe37797ec0cb8b7bbc91216ba1114309b1f0075f`。
 - 本仓库第一个提交是发布包 zip 解压后的原样内容（35 个文件）加一个空的 `.nojekyll`；本 README 是之后单独一个提交替换了包内自带的 README.md（包外改动），其余文件未改动。
+- 自带说明的第 2 条（br 压缩）已按 GitHub Pages 实测改写。
 - 发布包 zip 的 sha256：`d35f1eaa6113f617aca077b9d86249731b0e333d9bd44b2b7c1dd92d66e687e1`。注意 zip 本身不是字节可复现的（打包时间写入 zip 头），可复现的锚点是 manifest 里每个文件的 sha256。
 
 ---
@@ -93,10 +94,7 @@ fail-closed 逐个核对过，不匹配不会生成包。
 
 1. **`Content-Type: application/wasm`** — 现用代码路径（`fetch()` + `WebAssembly.compile(bytes)`，
    非 `instantiateStreaming`）对这个头不敏感，但仍建议显式配置对，为将来切换到流式编译留余地。
-2. **启用 br（Brotli）压缩，视为硬性部署要求，不是可选优化** — 两个 wasm 文件未压缩合计约 16.7MB，
-   br 压缩后约 5.07MB。真实 Slow-3G(400kbps)+4x CPU 限速下实测两种流程总耗时：**br 关 347.2 秒
-   （5.8 分钟）vs br 开 117.7 秒（2.0 分钟），加速比 2.9x**。不开 br 不是页面代码 bug，是这两份
-   wasm 产物大小决定的物理下限，但会让弱网用户等待接近 6 分钟。
+2. 建议托管时开启 br 压缩。网络很差时首次打开的实测：开 br 约 2 分钟，GitHub Pages 约 2.7 分钟，完全不压缩约 6 分钟。
 3. **长效不可变缓存**（`Cache-Control: public, max-age=31536000, immutable`）— 两个 wasm 文件用内容
    sha256 锚定，文件不变则可以放心长期缓存；升级版本必须同时改 pin 常量 + 发新文件（不能只换文件
    不改 pin，会被运行时校验拒绝，这是设计如此，不是需要绕过的限制）。
