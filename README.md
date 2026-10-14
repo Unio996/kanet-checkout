@@ -1,16 +1,16 @@
-# KANet 结账页（测试版 v0.2.4-test）
+# KANet 结账页（测试版 v0.2.5-test）
 
 纯静态网页，在浏览器本地验签、推导订单地址并监视付款，不依赖我们的任何服务器。
 
-页面入口：`checkout-static/checkout.html`（订单信息由商家生成的链接携带）。
+页面入口：`checkout-static/checkout.html`（结账页，订单信息由商家生成的链接携带）；`checkout-static/delivery.html`（数字商品取货页，买家凭发票链接取货/到期退款）。
 
 ## 请先读这几条
 
 1. **测试版**：版本号带 `-test`，功能与安全性未经公开审计，不应用于大额付款。
 2. **没有我们的服务器**：页面只做浏览器本地计算，不向我们的任何服务器发送数据。
-3. **主网结账页只连公共节点**：主网订单的链上状态只读取下列公共 Kaspa 节点，页面不接受订单链接指定的节点地址：`sara.kaspa.red`、`nina.kaspa.blue`、`eva.kaspa.green`、`vivi.kaspa.blue`、`isla.kaspa.red`（这些节点的运营方不是 KANet）。
+3. **只连公共服务**：主网结账页只读取下列公共 Kaspa 节点：`sara.kaspa.red`、`nina.kaspa.blue`、`eva.kaspa.green`、`vivi.kaspa.blue`、`isla.kaspa.red`；取货页另外从 `api.kaspa.org` 读取链上交易。页面不接受订单链接指定的其他地址，这些服务的运营方都不是 KANet。
 4. **订单凭据**：出单后务必下载订单凭据，凭据丢失将无法退款。
-5. **完整性自检**：本 README 末尾附全部 34 个文件（除本 README 外）的 sha256 清单，两个 wasm 另有来源 pin；可自行逐文件核对线上字节。
+5. **完整性自检**：本 README 末尾附全部 40 个文件（除本 README 外）的 sha256 清单，两个 wasm 另有来源 pin；可自行逐文件核对线上字节。
 6. **不是什么**：不是托管服务，不提供退款客服。资金直接进入订单合约地址，按规则自动分账或到期退款，KANet 不经手资金（退款走页面内的到期退款按钮）。
 7. **反馈渠道**：请在本仓库的 GitHub Issues 提交。
 
@@ -19,14 +19,15 @@
 - 打开页面时，你的浏览器会从托管方（GitHub Pages）下载页面文件，GitHub 会按其隐私政策记录访问者 IP；我们看不到也无法关闭这些记录。
 - 订单信息在链接的查询串里（`q`、`ch`、`sc` 参数：签名报价引用、渠道地址、签名链），因此会出现在托管方的请求日志里。这些内容不含私钥。
 - 页面运行后会直接连上面第 3 点列出的公共节点读取链上状态，节点运营方能看到你的 IP 以及你查询的订单地址。
+- 取货页会从 api.kaspa.org（Kaspa 公共区块浏览器接口，运营方不是 KANet）读取链上交易，该服务能看到你的 IP 和所查询的订单地址。取货页同样不使用 cookie 和浏览器本地存储。
 - 页面自身代码未发现使用 cookie 或浏览器本地存储，也没有统计脚本或第三方脚本。（依据：对页面自身文件的文本搜索，没有 `cookie`/`localStorage`/`indexedDB`；随附的 `kaspa.js` 胶水里有钱包存储接口的绑定，本页未调用，但我们没有逐行通读验证。）
 
 ## 版本与来源
 
-- 版本：`checkout-static-v0.2.4-test`（主仓 `Unio996/KANet` 的同名 tag），源 commit `fe37797ec0cb8b7bbc91216ba1114309b1f0075f`。
-- 本仓库第一个提交是发布包 zip 解压后的原样内容（35 个文件）加一个空的 `.nojekyll`；本 README 是之后单独一个提交替换了包内自带的 README.md（包外改动），其余文件未改动。
+- 版本：`checkout-static-v0.2.5-test`（主仓 `Unio996/KANet` 的同名 tag），源 commit `d758bdb1eb99c17f330fc45f952aee971ed9e4fd`。相对 v0.2.4-test 只增加取货页的 6 个文件（delivery.html 与 5 个 delivery-*.js），其余 34 个文件逐字节不变。
+- 本仓库第一个提交是 v0.2.4-test 发布包原样内容；v0.2.5-test 在其上追加 6 个新文件（原样自 v0.2.5-test 发布包），README 为包外改动，其余文件未改动。
 - 自带说明的第 2 条（br 压缩）已按 GitHub Pages 实测改写。
-- 发布包 zip 的 sha256：`d35f1eaa6113f617aca077b9d86249731b0e333d9bd44b2b7c1dd92d66e687e1`。注意 zip 本身不是字节可复现的（打包时间写入 zip 头），可复现的锚点是 manifest 里每个文件的 sha256。
+- v0.2.5-test 发布包 zip 的 sha256：`6ad92207b2030efa7a2726747470064f48b4b458b72a63a6bfeaeff7d1c0133a`（v0.2.4-test 的 zip 为 `d35f1eaa6113f617aca077b9d86249731b0e333d9bd44b2b7c1dd92d66e687e1`）。注意 zip 本身不是字节可复现的（打包时间写入 zip 头），可复现的锚点是 manifest 里每个文件的 sha256。
 
 ---
 
@@ -44,6 +45,12 @@ checkout-static/
 ├── order-template.js          订单地址推导备选路径（固定偏移覆写，silverc-wasm 加载失败时自动降级）
 ├── monitor.js                 订单地址到账状态/确认深度/节点 PMT 只读监视（浏览器直连节点 wss）
 ├── broadcast-commission.js    触发分账/退款交易组装（零签名，covenant 脚本本身是判据）
+├── delivery.html              数字商品取货页（买家凭发票链接取货/退款）
+├── delivery-page.js           取货页胶水层（读链接、展示订单、轮询状态、粘贴密文、退款与清扫入口）
+├── delivery-buyer.js          取货页买家流程（推导订单地址与派生密钥、读链解密、到期退款、清扫）
+├── delivery-crypto.js         取货页密码学（链接片段解析、HKDF 派生、AES-GCM 解密，零依赖）
+├── delivery-read.js           取货页读链适配器（api.kaspa.org 只读）
+├── delivery-copy.js           取货页全部用户可见文案（单表）
 └── vendor/
     ├── kaspa-web/              浏览器版 kaspa-wasm（sha256 见下）
     ├── silverc-wasm/           浏览器版 silverc 编译器（sha256 见下）
@@ -65,6 +72,10 @@ checkout-static/
   `vendor/generic-entry-witness-browser-parity.mjs`、`vendor/tx-mass-ub-browser-parity.mjs`——
   仓库内部的开发期自检脚本，买家打开页面时用不到（离开仓库目录结构就是死代码：裸 import
   `kaspa-wasm` + 相对路径指回仓库内其他模块）。
+
+## 取货页（delivery.html）的外部连接
+
+取货页从 `https://api.kaspa.org`（REST，只读）读取订单地址的链上交易，用来找到加密信箱里的交付物；该服务当前对跨域请求放行（响应 CORS 头为 `*`，开发期实测）。读到的只是链上公开数据，请求路径只含地址与链高度，不含任何订单秘密。到期退款、清扫的广播仍走浏览器直连公共节点 wRPC（同 checkout.html）。api.kaspa.org 是单点依赖：不可达时页面提示稍后自动重试，买家也可把商家给的密文粘贴进页面在本机解密。
 
 ## 编译器加载失败时怎么办
 
@@ -135,7 +146,7 @@ fail-closed 逐个核对过，不匹配不会生成包。
 - ⑨ 只采样验证了 5 个可用端点，公开节点池可能还有更多未穷举。
 
 
-## 全部文件 sha256（发布包 manifest，除本 README 外 34 个）
+## 全部文件 sha256（发布包 manifest，除本 README 外 40 个）
 
 | 文件 | 字节数 | sha256 |
 |---|---|---|
@@ -165,6 +176,12 @@ fail-closed 逐个核对过，不匹配不会生成包。
 | `checkout-static/vendor/sil-source/CommissionSplit.sil` | 14571 | `72bc6bf978ca240dcd6714c8c42acea88f8b04cc4026ba8ab3a8725ff49fe83a` |
 | `checkout-static/vendor/kaspa-web/README.md` | 2135 | `cd3d6124c9309b3b0e2425c5051cee6ab10bc9ef2db1da23eb986441d2696895` |
 | `checkout-static/vendor/silverc-wasm/README.md` | 4317 | `2dce9c00a3e404e3871bc806bf140594bef8fcb6aff8868f0fbf57a83d09a903` |
+| `checkout-static/delivery.html` | 1123 | `7f6d269180932a67560673f394de73565eb406b194fb51e23b76f6f7e81b127f` |
+| `checkout-static/delivery-page.js` | 7089 | `cca584f5468e17f24799a710ea3dbac0c2744f2083961dab2ff532c7a20fe5a4` |
+| `checkout-static/delivery-buyer.js` | 10660 | `7aa51cfdb006814f12b271eec2766b9b0c76406e9ee6d4ee5963f236facb9ed6` |
+| `checkout-static/delivery-crypto.js` | 13741 | `5e1e10232f6188d402b98ab65bdfb98b1ef18a8e33ef2d2cb1c00d957ae6db7b` |
+| `checkout-static/delivery-read.js` | 4512 | `7254c35c1d91cf63a51dfc835474da8ee074c384b7b923c3eb71e4b7e7c089ac` |
+| `checkout-static/delivery-copy.js` | 2553 | `d9d26db73835dee1f9102ce93e8b7ce10735d7c9880796bae4e87c78a2f60781` |
 | `checkout-static/vendor/kaspa-web/kaspa.js` | 537625 | `d0f14833f2db9c2fb4145a40e68d6221862a667eef15512e1994c02a5e588b04` |
 | `checkout-static/vendor/kaspa-web/kaspa_bg.wasm` | 11467355 | `732bdaa3ee8353c026654e9c7dd729674eb1bd064e8a0b8927b4cfb7df859e51` |
 | `checkout-static/vendor/kaspa-web/kaspa.d.ts` | 285627 | `78628cf0abe112d4103e3c66499e49e12881be1cd24f0953076de55f021e1b5d` |
